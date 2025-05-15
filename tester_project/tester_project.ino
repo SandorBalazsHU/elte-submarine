@@ -1,6 +1,7 @@
 #include <Servo.h>
 
 /*
+1540 max
 1525 min óramutató szerint
 1512 cicereg
 1513 cicereg
@@ -9,12 +10,12 @@
 1484 áll
 1483 cicereg
 1475 min óramutatóval ellentétes
+1460 min
 */
-
-
 const int pinMotor = 10;
 const int pinA = 2;  // Gomb A: növel
 const int pinC = 4;  // Gomb C: csökkent
+const int pinD = 3;  // Gomb D: reset
 
 Servo motor;
 
@@ -29,10 +30,12 @@ int pwmUs = CENTER_US;
 
 bool prevA = HIGH;
 bool prevC = HIGH;
+bool prevD = HIGH;
 
 void setup() {
   pinMode(pinA, INPUT_PULLUP);
   pinMode(pinC, INPUT_PULLUP);
+  pinMode(pinD, INPUT_PULLUP);
 
   motor.attach(pinMotor);
   motor.writeMicroseconds(pwmUs);
@@ -44,6 +47,14 @@ void setup() {
 void loop() {
   bool currentA = digitalRead(pinA);
   bool currentC = digitalRead(pinC);
+  bool currentD = digitalRead(pinD);
+
+  if (currentD == LOW && prevD == HIGH) {
+    pwmUs = CENTER_US;
+    Serial.print("RESET");
+    Serial.print("* PWM us: ");
+    Serial.println(pwmUs);
+  }
 
   if (currentA == LOW && prevA == HIGH) {
     pwmUs += STEP_US;
@@ -63,6 +74,7 @@ void loop() {
 
   prevA = currentA;
   prevC = currentC;
+  prevD = currentD;
 
-  delay(200); // 1 másodperces ciklusidő
+  delay(100); // 1 másodperces ciklusidő
 }
