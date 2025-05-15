@@ -17,7 +17,7 @@ private:
     bool movementEnabled;    // Általános mozgástiltás
     bool joystickEnabled;    // Engedélyezzük-e a joystick vezérlést
 
-    const int PWM_HARD_LIMIT = 95;
+    const int PWM_HARD_LIMIT = 96;
 
     const int NEUTRAL_SPEED = 90;  // Motor áll, nincs előre/hátra mozgás
 
@@ -76,7 +76,7 @@ public:
 
         // Finomhangolható érzékenységi beállítások
         const float X_OFFSET_CORRECTION = -0.10;  // jobbra tolódás kompenzáció
-        const float SPEED_EXPONENT = 2.0;         // nagyobb = lassabb sebességnövekedés
+        const float SPEED_EXPONENT = 10.0;         // nagyobb = lassabb sebességnövekedés
 
         // Skálázási tartomány
         const int SPEED_RANGE = 40;  // NEUTRAL ±40
