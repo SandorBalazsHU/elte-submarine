@@ -2,39 +2,36 @@
 
 class MotorController {
 private:
-    Servo leftMotor;         // Bal oldali ESC vezérlő PWM
-    Servo rightMotor;        // Jobb oldali ESC vezérlő PWM
+    Servo leftMotor;
+    Servo rightMotor;
 
     int leftMotorPin;
     int rightMotorPin;
 
-    int leftSpeed;           // Aktuális bal motor PWM érték (0–180)
-    int rightSpeed;          // Aktuális jobb motor PWM érték (0–180)
+    int leftSpeed;
+    int rightSpeed;
 
-    int leftDirection;       // +1 előre, -1 hátra (jelenleg nem használjuk külön, de előkészített)
+    int leftDirection;
     int rightDirection;
 
-    bool movementEnabled;    // Általános mozgástiltás
-    bool joystickEnabled;    // Engedélyezzük-e a joystick vezérlést
+    bool movementEnabled;
+    bool joystickEnabled;
 
     const int PWM_HARD_LIMIT = 96;
+    const int NEUTRAL_PWM = 90;
 
-    const int NEUTRAL_SPEED = 90;  // Motor áll, nincs előre/hátra mozgás
+    const int MAX_FORWARD_PWM = 96;
+    const int MIN_BACKWARD_PWM = 84;
 
-    const int SPEED_RANGE = 40;    // Max +/- eltérés a semlegestől
-    const int TURN_RANGE = 20;     // Max +/- különbség bal és jobb motor közt kormányzáshoz
-
-    const int MIN_SPEED = NEUTRAL_SPEED - SPEED_RANGE;  // = 90 - 40 = 50
-    const int MAX_SPEED = NEUTRAL_SPEED + SPEED_RANGE;  // = 90 + 40 = 130
+    const int LEVELS = 6;
 
 public:
-    // Konstruktor: inicializálja a pineket és változókat
     MotorController(int leftPin, int rightPin) {
         leftMotorPin = leftPin;
         rightMotorPin = rightPin;
 
-        leftSpeed = NEUTRAL_SPEED;
-        rightSpeed = NEUTRAL_SPEED;
+        leftSpeed = NEUTRAL_PWM;
+        rightSpeed = NEUTRAL_PWM;
 
         leftDirection = 1;
         rightDirection = 1;
@@ -43,18 +40,16 @@ public:
         joystickEnabled = true;
     }
 
-    // Inicializálás: attach-eljük a motorokat és semleges állapotba állítjuk őket
     void init() {
         leftMotor.attach(leftMotorPin);
         rightMotor.attach(rightMotorPin);
         updateMotors();
     }
 
-    // Frissíti a motor PWM jeleit, ha a mozgás engedélyezve van
     void updateMotors() {
         if (!movementEnabled) {
-            leftMotor.write(NEUTRAL_SPEED);
-            rightMotor.write(NEUTRAL_SPEED);
+            leftMotor.write(NEUTRAL_PWM);
+            rightMotor.write(NEUTRAL_PWM);
             return;
         }
 
@@ -62,72 +57,62 @@ public:
         rightMotor.write(rightSpeed);
     }
 
-    // jelenlegi álló motor 180-190 x tengely
-    // Joystick input feldolgozása: irány és sebesség kiszámítása
     void processJoystickInput(int x, int y) {
         if (!movementEnabled || !joystickEnabled)
             return;
 
-        // Joystick jellemzők
-        const int JOY_MIN = 0;
-        const int JOY_MAX = 673;
+        // Kalibrációs értékek
         const int JOY_CENTER_X = 332;
         const int JOY_CENTER_Y = 346;
 
-        // Finomhangolható érzékenységi beállítások
-        const float X_OFFSET_CORRECTION = -0.10;  // jobbra tolódás kompenzáció
-        const float SPEED_EXPONENT = 10.0;         // nagyobb = lassabb sebességnövekedés
+        const float FORWARD_STEP = (MAX_FORWARD_PWM - NEUTRAL_PWM) / float(LEVELS);  // 1.0
+        const float BACKWARD_STEP = (NEUTRAL_PWM - MIN_BACKWARD_PWM) / float(LEVELS); // 1.0
 
-        // Skálázási tartomány
-        const int SPEED_RANGE = 40;  // NEUTRAL ±40
-        const int TURN_RANGE = 20;
+        float normX = (x - JOY_CENTER_X) / 341.0;
+        float normY = (y - JOY_CENTER_Y) / 341.0;
 
-        x = constrain(x, JOY_MIN, JOY_MAX);
-        y = constrain(y, JOY_MIN, JOY_MAX);
+        int baseSpeed = NEUTRAL_PWM;
 
-        int centeredX = x - JOY_CENTER_X;
-        int centeredY = y - JOY_CENTER_Y;
+        if (abs(normY) <= 0.05) {
+            baseSpeed = NEUTRAL_PWM;
+        } else if (normY > 0.05) {
+            baseSpeed = NEUTRAL_PWM + int(normY * LEVELS * FORWARD_STEP);
+        } else if (normY < -0.05) {
+            baseSpeed = NEUTRAL_PWM + int(normY * LEVELS * BACKWARD_STEP); // negatív -> csökken
+        }
 
-        // Normalizálás -1.0 ... +1.0 közé
-        float normX = centeredX / 341.0;
-        float normY = centeredY / 341.0;
+        baseSpeed = constrain(baseSpeed, MIN_BACKWARD_PWM, MAX_FORWARD_PWM);
 
-        // Görbített, szelíd irányvezérlés (kvadratikus jellegű)
-        float curvedX = normX * abs(normX) + X_OFFSET_CORRECTION;
+        const int MAX_DELTA = 3;
+        int delta = int(normX * MAX_DELTA);
 
-        // Görbített, **nagyon szelíd** sebességgörbe (exponenciális)
-        float curvedY = normY >= 0 ?
-            pow(normY, SPEED_EXPONENT) :
-          -pow(abs(normY), SPEED_EXPONENT);
-
-        // Alap sebesség (mindkét motor)
-        int baseSpeed = NEUTRAL_SPEED + int(curvedY * SPEED_RANGE);
-
-        // Iránykorrekció (bal/jobb oldali eltérés)
-        int delta = int(curvedX * TURN_RANGE);
-
-        // Bal/jobb oldali PWM értékek
-        int left = constrain(baseSpeed - delta, MIN_SPEED, min(MAX_SPEED, PWM_HARD_LIMIT));
-        int right = constrain(baseSpeed + delta, MIN_SPEED, min(MAX_SPEED, PWM_HARD_LIMIT));
+        int left = baseSpeed - delta;
+        int right = baseSpeed + delta;
 
         setLeftSpeed(left);
         setRightSpeed(right);
     }
 
     void setLeftSpeed(int speed) {
-        speed = constrain(speed, MIN_SPEED, min(MAX_SPEED, PWM_HARD_LIMIT));
+        if (speed > NEUTRAL_PWM) {
+            speed = constrain(speed, NEUTRAL_PWM, min(PWM_HARD_LIMIT, MAX_FORWARD_PWM));
+        } else if (speed < NEUTRAL_PWM) {
+            speed = constrain(speed, MIN_BACKWARD_PWM, NEUTRAL_PWM);
+        }
         leftSpeed = speed;
         updateMotors();
     }
 
     void setRightSpeed(int speed) {
-        speed = constrain(speed, MIN_SPEED, min(MAX_SPEED, PWM_HARD_LIMIT));
+        if (speed > NEUTRAL_PWM) {
+            speed = constrain(speed, NEUTRAL_PWM, min(PWM_HARD_LIMIT, MAX_FORWARD_PWM));
+        } else if (speed < NEUTRAL_PWM) {
+            speed = constrain(speed, MIN_BACKWARD_PWM, NEUTRAL_PWM);
+        }
         rightSpeed = speed;
         updateMotors();
     }
 
-
-    // Bal motor irány (előre/hátra) — jövőbeli bővítéshez
     void setLeftDirection(int dir) {
         leftDirection = (dir >= 0) ? 1 : -1;
     }
@@ -136,41 +121,35 @@ public:
         rightDirection = (dir >= 0) ? 1 : -1;
     }
 
-    // Mozgás letiltása (mindkét motor STOP)
     void stop() {
         movementEnabled = false;
-        updateMotors();  // azonnal állítsa meg a motorokat
+        updateMotors();
     }
 
-    // Mozgás engedélyezése (ismét aktív joystick vezérlés)
     void start() {
         movementEnabled = true;
-        updateMotors();  // aktuális értékkel újraindít
+        updateMotors();
     }
 
-    // Bal oldal teljes fordulat, joystick input figyelmen kívül hagyva
     void leftFull() {
         joystickEnabled = false;
-        setLeftSpeed(MIN_SPEED);
-        setRightSpeed(MAX_SPEED);
+        setLeftSpeed(MIN_BACKWARD_PWM);
+        setRightSpeed(MAX_FORWARD_PWM);
     }
 
-    // Jobb oldal teljes fordulat, joystick input figyelmen kívül hagyva
     void rightFull() {
         joystickEnabled = false;
-        setLeftSpeed(MAX_SPEED);
-        setRightSpeed(MIN_SPEED);
+        setLeftSpeed(MAX_FORWARD_PWM);
+        setRightSpeed(MIN_BACKWARD_PWM);
     }
 
-    // Visszaállít minden tiltást — joystick és mozgás újra aktív
     void reset() {
         joystickEnabled = true;
         movementEnabled = true;
-        setLeftSpeed(NEUTRAL_SPEED);
-        setRightSpeed(NEUTRAL_SPEED);
+        setLeftSpeed(NEUTRAL_PWM);
+        setRightSpeed(NEUTRAL_PWM);
     }
 
-    // Getterek
     int getLeftSpeed() const { return leftSpeed; }
     int getRightSpeed() const { return rightSpeed; }
     bool isMovementEnabled() const { return movementEnabled; }
@@ -180,26 +159,11 @@ public:
 
 class JoystickInput {
 private:
-    // Alapértelmezett pinek (módosíthatók konstruktorban)
-    int pinX;
-    int pinY;
-    int pinSW;      // Joystick gomb
-    int pinA;
-    int pinB;
-    int pinC;
-    int pinD;
-
-    // Bemeneti értékek tárolása
-    int xValue;     // 0–1023
-    int yValue;
-    bool swPressed;
-    bool aPressed;
-    bool bPressed;
-    bool cPressed;
-    bool dPressed;
+    int pinX, pinY, pinSW, pinA, pinB, pinC, pinD;
+    int xValue, yValue;
+    bool swPressed, aPressed, bPressed, cPressed, dPressed;
 
 public:
-    // Konstruktor, opcionálisan testreszabható pinekkel
     JoystickInput(int xPin = A0, int yPin = A1, int swPin = 8,
                   int aPin = 2, int bPin = 3, int cPin = 4, int dPin = 5) {
         pinX = xPin;
@@ -210,14 +174,12 @@ public:
         pinC = cPin;
         pinD = dPin;
 
-        // Beállítjuk a gomb pineket bemenetként
         pinMode(pinSW, INPUT_PULLUP);
         pinMode(pinA, INPUT_PULLUP);
         pinMode(pinB, INPUT_PULLUP);
         pinMode(pinC, INPUT_PULLUP);
         pinMode(pinD, INPUT_PULLUP);
 
-        // Inicializálás
         xValue = 512;
         yValue = 512;
         swPressed = false;
@@ -227,7 +189,6 @@ public:
         dPressed = false;
     }
 
-    // Állapotok frissítése – minden bemenetet olvas
     void update() {
         xValue = analogRead(pinX);
         yValue = analogRead(pinY);
@@ -238,7 +199,6 @@ public:
         dPressed = (digitalRead(pinD) == LOW);
     }
 
-    // Getterek
     int getX() const { return xValue; }
     int getY() const { return yValue; }
 
@@ -249,43 +209,28 @@ public:
     bool isDPressed() const { return dPressed; }
 };
 
-JoystickInput joystic = JoystickInput();
 
-MotorController motor = MotorController(10,11);
+// Példányosítás
+JoystickInput joystic = JoystickInput();
+MotorController motor = MotorController(10, 11);
 
 void setup() {
-  Serial.begin(9600);
-  motor.init();
+    Serial.begin(9600);
+    motor.init();
 }
 
-
-/*
-  Összefoglalás:
-  Joystick állás	Eredmény
-  x = 332, y = 673	Egyenes előre, maximális sebességgel (PWM = 115)
-  x = 332, y = 346	Áll, közép, semleges
-  x = 673, y = 346	Egy helyben jobbra fordulás, vagy jobb oldali túlhajtás
-  x = 0, y = 346	Egy helyben balra fordulás, vagy bal oldali túlhajtás
-  x = 673, y = 673	Ívben jobbra előre
-*/
-
-//x tengely: 0-673 kozép: 332
-//y tengely: 0-673 közép 346
 void loop() {
-  // put your main code here, to run repeatedly:
-  joystic.update();
-  //Serial.println(joystic.getX());
+    joystic.update();
 
-  int joyX = joystic.getX();
-  int joyY = joystic.getY();
+    int joyX = joystic.getX();
+    int joyY = joystic.getY();
 
-  motor.processJoystickInput(joyX, joyY);
+    motor.processJoystickInput(joyX, joyY);
 
-  Serial.println("X:");
-  Serial.println(joyX);
-  Serial.println("Y:");
-  Serial.println(joyY);
+    Serial.print("X: ");
+    Serial.print(joyX);
+    Serial.print(" | Y: ");
+    Serial.println(joyY);
 
-  delay(200);
+    delay(200);
 }
-
