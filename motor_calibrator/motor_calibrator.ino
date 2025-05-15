@@ -12,6 +12,7 @@
 1475 min óramutatóval ellentétes
 1460 min
 */
+
 const int pinMotor = 10;
 const int pinA = 2;  // Gomb A: növel
 const int pinC = 4;  // Gomb C: csökkent
@@ -33,6 +34,7 @@ bool prevC = HIGH;
 bool prevD = HIGH;
 
 void setup() {
+  delay(200);
   pinMode(pinA, INPUT_PULLUP);
   pinMode(pinC, INPUT_PULLUP);
   pinMode(pinD, INPUT_PULLUP);
@@ -41,6 +43,7 @@ void setup() {
   motor.writeMicroseconds(pwmUs);
 
   Serial.begin(9600);
+  Serial.println("");
   Serial.println("Microseconds alapú ESC vezérlés indul.");
 }
 
@@ -51,7 +54,7 @@ void loop() {
 
   if (currentD == LOW && prevD == HIGH) {
     pwmUs = CENTER_US;
-    Serial.print("RESET");
+    Serial.println("* RESET");
     Serial.print("* PWM us: ");
     Serial.println(pwmUs);
   }

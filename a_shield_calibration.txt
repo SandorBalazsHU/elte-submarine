@@ -1,0 +1,16 @@
+X tengely középpont: 331
+X tengely maximum  : 675
+X tengely minimum  : 0
+Y tengely középpont: 346
+Y tengely maximum  : 675
+Y tengely minimum  : 0
+
+
+FULL előre:   X:331 Y:675
+FULL HÁTRA:   X:331 Y: 0
+FULL JOBBRA:  X:675 Y:346
+FÉLIG JOBBRA: X:675 Y:675
+FULL BALRA:   X:0   Y:346
+FÉLIG BALRA:  X:0   Y:675
+HÁTRA BALRA:  x:0   Y:0
+HÁTRA JOBBRA: X:675 Y:0
