@@ -69,14 +69,18 @@ public:
     bool isDPressed() const { return dPressed; }
 };
 
+JoystickInput joystic = JoystickInput();
 
-
-oid setup() {
-  // put your setup code here, to run once:
-
+void setup() {
+  Serial.begin(9600);
 }
 
+//x tengely: 0-673
+//y tengely: 0-673
 void loop() {
   // put your main code here, to run repeatedly:
-
+  joystic.update();
+  Serial.println(joystic.getX());
+  delay(200);
 }
+
