@@ -17,9 +17,13 @@ private:
     bool movementEnabled;    // Általános mozgástiltás
     bool joystickEnabled;    // Engedélyezzük-e a joystick vezérlést
 
-    const int MIN_SPEED = 0;
-    const int MAX_SPEED = 180;
-    const int NEUTRAL_SPEED = 90;
+    const int NEUTRAL_SPEED = 90;  // Motor áll, nincs előre/hátra mozgás
+
+    const int SPEED_RANGE = 40;    // Max +/- eltérés a semlegestől
+    const int TURN_RANGE = 20;     // Max +/- különbség bal és jobb motor közt kormányzáshoz
+
+    const int MIN_SPEED = NEUTRAL_SPEED - SPEED_RANGE;  // = 90 - 40 = 50
+    const int MAX_SPEED = NEUTRAL_SPEED + SPEED_RANGE;  // = 90 + 40 = 130
 
 public:
     // Konstruktor: inicializálja a pineket és változókat
@@ -56,35 +60,45 @@ public:
         rightMotor.write(rightSpeed);
     }
 
+    // jelenlegi álló motor 180-190 x tengely
     // Joystick input feldolgozása: irány és sebesség kiszámítása
     void processJoystickInput(int x, int y) {
         if (!movementEnabled || !joystickEnabled)
             return;
 
-        // Új határok szerint normalizálunk (0–673), középérték ~336
         const int JOY_MIN = 0;
         const int JOY_MAX = 673;
-        const int JOY_CENTER = 336;  // középérték
+        const int JOY_CENTER_X = 332;
+        const int JOY_CENTER_Y = 346;
+
+        const float X_OFFSET_CORRECTION = -0.10;  // 🔧 finomhangolható! (negatív → jobbra tolt semleges pont)
 
         x = constrain(x, JOY_MIN, JOY_MAX);
         y = constrain(y, JOY_MIN, JOY_MAX);
 
-        int centeredX = x - JOY_CENTER;
-        int centeredY = y - JOY_CENTER;
+        int centeredX = x - JOY_CENTER_X;
+        int centeredY = y - JOY_CENTER_Y;
 
-        // Az új tartomány -336 – +336
-        // Fordulatszám kiszámítása (0–180), 90 a közép
-        int baseSpeed = map(centeredY, -336, 336, MIN_SPEED, MAX_SPEED);
-        baseSpeed = constrain(baseSpeed, MIN_SPEED, MAX_SPEED);
+        float normX = centeredX / 341.0;
+        float normY = centeredY / 341.0;
 
-        // Irányváltási delta (balra–jobbra)
-        int delta = map(centeredX, -336, 336, -45, 45);
+        float curvedX = normX * abs(normX) + X_OFFSET_CORRECTION;
+        float curvedY = normY * abs(normY);
 
-        // Differenciált sebességek beállítása
-        setLeftSpeed(baseSpeed - delta);
-        setRightSpeed(baseSpeed + delta);
+        const int SPEED_RANGE = 40;
+        const int TURN_RANGE = 20;
+
+        int baseSpeed = NEUTRAL_SPEED + int(curvedY * SPEED_RANGE);
+        int delta = int(curvedX * TURN_RANGE);
+
+        int left = constrain(baseSpeed - delta, MIN_SPEED, MAX_SPEED);
+        int right = constrain(baseSpeed + delta, MIN_SPEED, MAX_SPEED);
+
+        setLeftSpeed(left);
+        setRightSpeed(right);
     }
-    
+
+
     // Állítsa be a bal motor sebességét
     void setLeftSpeed(int speed) {
         leftSpeed = constrain(speed, MIN_SPEED, MAX_SPEED);
@@ -228,8 +242,8 @@ void setup() {
   motor.init();
 }
 
-//x tengely: 0-673
-//y tengely: 0-673
+//x tengely: 0-673 kozép: 332
+//y tengely: 0-673 közép 346
 void loop() {
   // put your main code here, to run repeatedly:
   joystic.update();
@@ -239,6 +253,11 @@ void loop() {
   int joyY = joystic.getY();
 
   motor.processJoystickInput(joyX, joyY);
+
+  Serial.println("X:");
+  Serial.println(joyX);
+  Serial.println("Y:");
+  Serial.println(joyY);
 
   delay(200);
 }
