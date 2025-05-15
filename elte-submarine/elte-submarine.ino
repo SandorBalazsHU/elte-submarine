@@ -17,7 +17,7 @@ private:
     bool movementEnabled;    // Általános mozgástiltás
     bool joystickEnabled;    // Engedélyezzük-e a joystick vezérlést
 
-    const int PWM_HARD_LIMIT = 115;
+    const int PWM_HARD_LIMIT = 95;
 
     const int NEUTRAL_SPEED = 90;  // Motor áll, nincs előre/hátra mozgás
 
@@ -68,12 +68,19 @@ public:
         if (!movementEnabled || !joystickEnabled)
             return;
 
+        // Joystick jellemzők
         const int JOY_MIN = 0;
         const int JOY_MAX = 673;
         const int JOY_CENTER_X = 332;
         const int JOY_CENTER_Y = 346;
 
-        const float X_OFFSET_CORRECTION = -0.10;  // 🔧 finomhangolható! (negatív → jobbra tolt semleges pont)
+        // Finomhangolható érzékenységi beállítások
+        const float X_OFFSET_CORRECTION = -0.10;  // jobbra tolódás kompenzáció
+        const float SPEED_EXPONENT = 2.0;         // nagyobb = lassabb sebességnövekedés
+
+        // Skálázási tartomány
+        const int SPEED_RANGE = 40;  // NEUTRAL ±40
+        const int TURN_RANGE = 20;
 
         x = constrain(x, JOY_MIN, JOY_MAX);
         y = constrain(y, JOY_MIN, JOY_MAX);
@@ -81,20 +88,27 @@ public:
         int centeredX = x - JOY_CENTER_X;
         int centeredY = y - JOY_CENTER_Y;
 
+        // Normalizálás -1.0 ... +1.0 közé
         float normX = centeredX / 341.0;
         float normY = centeredY / 341.0;
 
+        // Görbített, szelíd irányvezérlés (kvadratikus jellegű)
         float curvedX = normX * abs(normX) + X_OFFSET_CORRECTION;
-        float curvedY = normY * abs(normY);
 
-        const int SPEED_RANGE = 40;
-        const int TURN_RANGE = 20;
+        // Görbített, **nagyon szelíd** sebességgörbe (exponenciális)
+        float curvedY = normY >= 0 ?
+            pow(normY, SPEED_EXPONENT) :
+          -pow(abs(normY), SPEED_EXPONENT);
 
+        // Alap sebesség (mindkét motor)
         int baseSpeed = NEUTRAL_SPEED + int(curvedY * SPEED_RANGE);
+
+        // Iránykorrekció (bal/jobb oldali eltérés)
         int delta = int(curvedX * TURN_RANGE);
 
-        int left = constrain(baseSpeed - delta, MIN_SPEED, MAX_SPEED);
-        int right = constrain(baseSpeed + delta, MIN_SPEED, MAX_SPEED);
+        // Bal/jobb oldali PWM értékek
+        int left = constrain(baseSpeed - delta, MIN_SPEED, min(MAX_SPEED, PWM_HARD_LIMIT));
+        int right = constrain(baseSpeed + delta, MIN_SPEED, min(MAX_SPEED, PWM_HARD_LIMIT));
 
         setLeftSpeed(left);
         setRightSpeed(right);
@@ -243,6 +257,17 @@ void setup() {
   Serial.begin(9600);
   motor.init();
 }
+
+
+/*
+  Összefoglalás:
+  Joystick állás	Eredmény
+  x = 332, y = 673	Egyenes előre, maximális sebességgel (PWM = 115)
+  x = 332, y = 346	Áll, közép, semleges
+  x = 673, y = 346	Egy helyben jobbra fordulás, vagy jobb oldali túlhajtás
+  x = 0, y = 346	Egy helyben balra fordulás, vagy bal oldali túlhajtás
+  x = 673, y = 673	Ívben jobbra előre
+*/
 
 //x tengely: 0-673 kozép: 332
 //y tengely: 0-673 közép 346
