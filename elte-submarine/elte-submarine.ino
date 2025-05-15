@@ -17,6 +17,8 @@ private:
     bool movementEnabled;    // Általános mozgástiltás
     bool joystickEnabled;    // Engedélyezzük-e a joystick vezérlést
 
+    const int PWM_HARD_LIMIT = 115;
+
     const int NEUTRAL_SPEED = 90;  // Motor áll, nincs előre/hátra mozgás
 
     const int SPEED_RANGE = 40;    // Max +/- eltérés a semlegestől
@@ -98,18 +100,18 @@ public:
         setRightSpeed(right);
     }
 
-
-    // Állítsa be a bal motor sebességét
     void setLeftSpeed(int speed) {
-        leftSpeed = constrain(speed, MIN_SPEED, MAX_SPEED);
+        speed = constrain(speed, MIN_SPEED, min(MAX_SPEED, PWM_HARD_LIMIT));
+        leftSpeed = speed;
         updateMotors();
     }
 
-    // Állítsa be a jobb motor sebességét
     void setRightSpeed(int speed) {
-        rightSpeed = constrain(speed, MIN_SPEED, MAX_SPEED);
+        speed = constrain(speed, MIN_SPEED, min(MAX_SPEED, PWM_HARD_LIMIT));
+        rightSpeed = speed;
         updateMotors();
     }
+
 
     // Bal motor irány (előre/hátra) — jövőbeli bővítéshez
     void setLeftDirection(int dir) {
