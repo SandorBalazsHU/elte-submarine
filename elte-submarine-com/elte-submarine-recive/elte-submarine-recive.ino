@@ -10,5 +10,5 @@ void setup() {
 void loop() {
   Serial.println("Recive...");
   serialRS485.update();
-  delay(1000);
+  delay(200);
 }

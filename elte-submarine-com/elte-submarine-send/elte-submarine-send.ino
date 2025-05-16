@@ -11,7 +11,8 @@ void setup() {
 }
 
 void loop() {
-  serialRS485.send(117,117,0,0,0,0,0,0,0);
-  Serial.println("Send...");
-  delay(1000);
+    joystic.update();
+    serialRS485.send(joystic.getX(),joystic.getY(),joystic.isSPressed(),joystic.isAPressed(),joystic.isBPressed(),joystic.isCPressed(),joystic.isDPressed(),joystic.isEPressed(),joystic.isFPressed());
+    Serial.println("Message sended.");
+    delay(200);
 }
