@@ -33,7 +33,7 @@ public:
     bool isFPressed() const { return buttonF; }
 
 
-    void init(long baudrate = 9600) {
+    void init(long baudrate = 115200) {
         rs485Serial.begin(baudrate);
     }
 

@@ -3,7 +3,7 @@
 #include "JoystickInputRS485.h"
 
 JoystickInputRS485 joystic = JoystickInputRS485();
-MotorController motor = MotorController(9, 8);
+MotorController motor = MotorController(10, 11);
 
 void setup() {
     Serial.begin(9600);
