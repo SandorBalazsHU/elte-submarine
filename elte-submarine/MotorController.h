@@ -64,6 +64,7 @@ public:
         if(Y >= Y_MID) DIR = -1.0f;
         if(Y <  Y_MID) DIR = +1.0f;
 
+        //SEBESSÉG
         float PWM = CEN;
         if(Y >= Y_MID){
           PWM = CEN + ( ( PWM_MAX_FOR - CEN ) * (( Y - Y_MID ) / Y_MID ) );
@@ -78,6 +79,7 @@ public:
         float PWM_LEF = PWM;
         float PWM_RIG = PWM;
 
+        //FORDULÁS
         if(X > X_MID + FORWARD_CORNERING_SEPARATION) {
           PWM_LEF = CEN + ( ( PWM_MAX_FOR - CEN ) * (( X - X_MID ) / X_MID ) );
           PWM_RIG = CEN;
@@ -113,14 +115,14 @@ public:
 
     void leftTurn() {
         joystickEnabled = false;
-        setLeftSpeed(PWM_MAX_BAC);
+        setLeftSpeed(CEN);
         setRightSpeed(PWM_MAX_FOR_BUT);
     }
 
     void rightTurn() {
         joystickEnabled = false;
         setLeftSpeed(PWM_MAX_FOR_BUT);
-        setRightSpeed(PWM_MAX_BAC);
+        setRightSpeed(CEN);
     }
 
     void reset() {
