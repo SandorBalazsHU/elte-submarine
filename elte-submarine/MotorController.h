@@ -56,6 +56,9 @@ public:
         if (!movementEnabled || !joystickEnabled)
             return;
 
+        //X = X + 0.1f;
+        //Y = Y + 0.1f;
+
         float DIR = -1.0f;
         if(Y >= Y_MID) DIR = -1.0f;
         if(Y <  Y_MID) DIR = +1.0f;
@@ -63,14 +66,11 @@ public:
         float PWM = CEN;
         if(Y >= Y_MID){
           PWM = CEN + ( ( PWM_MAX_FOR - CEN ) * (( Y - Y_MID ) / Y_MID ) );
-          //PWM = PWM_MAX_FOR * ( Y - Y_MID ) / Y_MID;
         }else{
           PWM = CEN - ( ( CEN - PWM_MAX_BAC ) * ( 1.0F - ( Y / Y_MID ) ) );
         }
-        if(fabs(Y - Y_MID) <= 1.0f ) PWM = CEN;
 
-
-        int DIF_MAX = fabs( PWM - CEN );
+        /*int DIF_MAX = fabs( PWM - CEN );
 
         float DIF_LEF = 0.0f;
         float DIF_RIG = 0.0f;
@@ -78,13 +78,13 @@ public:
           DIF_LEF = 0.0f;
           DIF_RIG = ( X - X_MID ) / X_MID;
         }else{
-          DIF_LEF = ( X - X_MID );
+          DIF_LEF = ( X - X_MID ) / X_MID;
           DIF_RIG = 0.0f;
         }
 
-        float PWM_LEF = PWM + ( ( DIF_MAX * DIF_LEF ) * DIR );
+        float PWM_LEF = PWM + ( ( DIF_MAX * DIF_RIG ) * DIR );
 
-        float PWM_RIG = PWM + ( ( DIF_MAX * DIF_RIG ) * DIR );
+        float PWM_RIG = PWM + ( ( DIF_MAX * DIF_LEF ) * DIR );*/
 
         setLeftSpeed(PWM);
         setRightSpeed(PWM);
