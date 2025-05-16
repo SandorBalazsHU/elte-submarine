@@ -1,3 +1,4 @@
+#include "HardwareSerial.h"
 #ifndef JOYSTICK_INPUT_RS485
 #define JOYSTICK_INPUT_RS485
 
@@ -40,8 +41,8 @@ public:
         updateButton(serialRS485.isBPressed(), bPressed, bPrev, bReleased);
         updateButton(serialRS485.isCPressed(), cPressed, cPrev, cReleased);
         updateButton(serialRS485.isDPressed(), dPressed, dPrev, dReleased);
-        updateButton(serialRS485.isDPressed(), ePressed, ePrev, eReleased);
-        updateButton(serialRS485.isEPressed(), fPressed, fPrev, fReleased);
+        updateButton(serialRS485.isEPressed(), ePressed, ePrev, eReleased);
+        updateButton(serialRS485.isFPressed(), fPressed, fPrev, fReleased);
     }
 
     int getX() const { return xValue; }
@@ -65,7 +66,7 @@ public:
 
 private:
     void updateButton(bool value, bool &current, bool &previous, bool &released) {
-        bool now = (value == LOW);
+        bool now = (value == true);
         released = (!now && previous);  // Felengedés esemény
         previous = current;
         current = now;

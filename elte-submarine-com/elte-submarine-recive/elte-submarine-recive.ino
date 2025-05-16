@@ -19,10 +19,10 @@ void loop() {
     int joyY = joystic.getY();
 
     motor.processJoystickInput(joyX, joyY);
-    /*if(joystic.isDPressed()) motor.leftTurn();
+    if(joystic.isDPressed()) motor.leftTurn();
     if(joystic.isDReleased()) motor.reset();
     if(joystic.isBPressed()) motor.rightTurn();
-    if(joystic.isBReleased()) motor.reset();*/
+    if(joystic.isBReleased()) motor.reset();
 
     Serial.print("LEF: ");
     Serial.print(motor.getLeftSpeed());
