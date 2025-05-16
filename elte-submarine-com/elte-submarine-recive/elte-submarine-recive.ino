@@ -6,7 +6,7 @@ JoystickInputRS485 joystic = JoystickInputRS485();
 MotorController motor = MotorController(10, 11);
 
 void setup() {
-    Serial.begin(9600);
+    //Serial.begin(9600);
     joystic.init();
     motor.init();
 }
@@ -15,7 +15,6 @@ void loop() {
     joystic.update();
 
     int joyX = joystic.getX();
-    //Serial.println(joyX);
     int joyY = joystic.getY();
 
     motor.processJoystickInput(joyX, joyY);
@@ -23,11 +22,6 @@ void loop() {
     if(joystic.isDReleased()) motor.reset();
     if(joystic.isBPressed()) motor.rightTurn();
     if(joystic.isBReleased()) motor.reset();
-
-    Serial.print("LEF: ");
-    Serial.print(motor.getLeftSpeed());
-    Serial.print(" | RIG: ");
-    Serial.println(motor.getRightSpeed());
 
     delay(200);
 }

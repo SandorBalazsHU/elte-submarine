@@ -8,7 +8,7 @@ public:
     RS485Send(int rxPin, int txPin)
         : rs485Serial(rxPin, txPin) {}
 
-    void init(long baudrate = 115200) {
+    void init(long baudrate = 9600) {
         rs485Serial.begin(baudrate);
     };
 

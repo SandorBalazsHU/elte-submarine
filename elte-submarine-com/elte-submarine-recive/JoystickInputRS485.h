@@ -15,7 +15,7 @@ private:
     bool sReleased, aReleased, bReleased, cReleased, dReleased, eReleased, fReleased;
 
 public:
-    JoystickInputRS485() : serialRS485(RS485Receive(13,12)) {
+    JoystickInputRS485() : serialRS485(RS485Receive()) {
 
         const int X_MID = 331;
         const int Y_MID = 346;

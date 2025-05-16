@@ -1,11 +1,8 @@
 #ifndef RS485RECEIVE_H
 #define RS485RECEIVE_H
 
-#include <SoftwareSerial.h>
-
 class RS485Receive {
 private:
-    SoftwareSerial rs485Serial;
     int    joyX;
     int    joyY;
     int buttonS;
@@ -18,8 +15,7 @@ private:
 
 public:
 
-    RS485Receive(int rxPin, int txPin)
-        : rs485Serial(rxPin, txPin) {}
+    RS485Receive() {}
 
     int getX() const { return joyX; }
     int getY() const { return joyY; }
@@ -33,13 +29,13 @@ public:
     bool isFPressed() const { return buttonF; }
 
 
-    void init(long baudrate = 115200) {
-        rs485Serial.begin(baudrate);
+    void init(long baudrate = 9600) {
+        Serial.begin(baudrate);
     }
 
     void update() {
-        if (rs485Serial.available()) {
-            String message = rs485Serial.readStringUntil('\n');
+        if (Serial.available()) {
+            String message = Serial.readStringUntil('\n');
             message.trim(); // felesleges whitespace eltávolítása
 
             // Az üzenet darabolása vesszők mentén
@@ -50,25 +46,12 @@ public:
             for (int i = 0; i < 9; ++i) {
                 index = message.indexOf(',', lastIndex);
                 if (index == -1 && i < 8) {
-                    Serial.println("Hibás formátum: hiányzó érték.");
                     return;
                 }
 
                 String part = (i < 8) ? message.substring(lastIndex, index) : message.substring(lastIndex);
                 values[i] = part.toInt();
                 lastIndex = index + 1;
-            }
-
-            if(false){
-              Serial.print("X: "); Serial.print(values[0]);
-              Serial.print(" | Y: "); Serial.print(values[1]);
-              Serial.print(" | SW: "); Serial.print(values[2]);
-              Serial.print(" | A: "); Serial.print(values[3]);
-              Serial.print(" | B: "); Serial.print(values[4]);
-              Serial.print(" | C: "); Serial.print(values[5]);
-              Serial.print(" | D: "); Serial.print(values[6]);
-              Serial.print(" | E: "); Serial.print(values[7]);
-              Serial.print(" | F: "); Serial.println(values[8]);
             }
 
                joyX = values[0];
@@ -80,8 +63,6 @@ public:
             buttonD = values[6];
             buttonE = values[7];
             buttonF = values[8];
-        }else{
-            Serial.println("RS485 NOT AVAILABLE!");
         }
     }
 };
