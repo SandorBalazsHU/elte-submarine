@@ -2,7 +2,10 @@ class JoystickInput {
 private:
     int pinX, pinY, pinS, pinA, pinB, pinC, pinD, pinE, pinF;
     int xValue, yValue;
+
     bool sPressed, aPressed, bPressed, cPressed, dPressed, ePressed, fPressed;
+    bool sPrev, aPrev, bPrev, cPrev, dPrev, ePrev, fPrev;
+    bool sReleased, aReleased, bReleased, cReleased, dReleased, eReleased, fReleased;
 
 public:
     JoystickInput(int xPin = A0, int yPin = A1, int sPin = 8,
@@ -29,25 +32,23 @@ public:
         const int Y_MID = 346;
         xValue = X_MID;
         yValue = Y_MID;
-        sPressed = false;
-        aPressed = false;
-        bPressed = false;
-        cPressed = false;
-        dPressed = false;
-        ePressed = false;
-        fPressed = false;
+
+        sPressed = aPressed = bPressed = cPressed = dPressed = ePressed = fPressed = false;
+        sPrev    = aPrev    = bPrev    = cPrev    = dPrev    = ePrev    = fPrev    = false;
+        sReleased = aReleased = bReleased = cReleased = dReleased = eReleased = fReleased = false;
     }
 
     void update() {
         xValue = analogRead(pinX);
         yValue = analogRead(pinY);
-        sPressed = (digitalRead(pinS) == LOW);
-        aPressed = (digitalRead(pinA) == LOW);
-        bPressed = (digitalRead(pinB) == LOW);
-        cPressed = (digitalRead(pinC) == LOW);
-        dPressed = (digitalRead(pinD) == LOW);
-        ePressed = (digitalRead(pinE) == LOW);
-        fPressed = (digitalRead(pinF) == LOW);
+
+        updateButton(pinS, sPressed, sPrev, sReleased);
+        updateButton(pinA, aPressed, aPrev, aReleased);
+        updateButton(pinB, bPressed, bPrev, bReleased);
+        updateButton(pinC, cPressed, cPrev, cReleased);
+        updateButton(pinD, dPressed, dPrev, dReleased);
+        updateButton(pinE, ePressed, ePrev, eReleased);
+        updateButton(pinF, fPressed, fPrev, fReleased);
     }
 
     int getX() const { return xValue; }
@@ -60,4 +61,28 @@ public:
     bool isDPressed() const { return dPressed; }
     bool isEPressed() const { return ePressed; }
     bool isFPressed() const { return fPressed; }
+
+    bool isSReleased() { return consumeReleased(sReleased); }
+    bool isAReleased() { return consumeReleased(aReleased); }
+    bool isBReleased() { return consumeReleased(bReleased); }
+    bool isCReleased() { return consumeReleased(cReleased); }
+    bool isDReleased() { return consumeReleased(dReleased); }
+    bool isEReleased() { return consumeReleased(eReleased); }
+    bool isFReleased() { return consumeReleased(fReleased); }
+
+private:
+    void updateButton(int pin, bool &current, bool &previous, bool &released) {
+        bool now = (digitalRead(pin) == LOW);
+        released = (!now && previous);  // Felengedés esemény
+        previous = current;
+        current = now;
+    }
+
+    bool consumeReleased(bool &releasedFlag) {
+        if (releasedFlag) {
+            releasedFlag = false;
+            return true;
+        }
+        return false;
+    }
 };

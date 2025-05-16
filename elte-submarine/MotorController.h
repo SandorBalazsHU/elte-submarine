@@ -23,6 +23,10 @@ private:
     float X_MID       = 331;
     float Y_MID       = 346;
 
+    float PWM_MAX_FOR_BUT = 1530;
+
+    float FORWARD_CORNERING_SEPARATION = 3.0f;
+
 public:
     MotorController(int leftPin, int rightPin) {
         leftMotorPin = leftPin;
@@ -56,9 +60,6 @@ public:
         if (!movementEnabled || !joystickEnabled)
             return;
 
-        //X = X + 0.1f;
-        //Y = Y + 0.1f;
-
         float DIR = -1.0f;
         if(Y >= Y_MID) DIR = -1.0f;
         if(Y <  Y_MID) DIR = +1.0f;
@@ -70,26 +71,24 @@ public:
           PWM = CEN - ( ( CEN - PWM_MAX_BAC ) * ( 1.0F - ( Y / Y_MID ) ) );
         }
 
-        /*int DIF_MAX = fabs( PWM - CEN );
+        int DIF_MAX = fabs( PWM - CEN );
 
         float DIF_LEF = 0.0f;
         float DIF_RIG = 0.0f;
-        if(X >= X_MID) {
-          DIF_LEF = 0.0f;
-          DIF_RIG = ( X - X_MID ) / X_MID;
-        }else{
-          DIF_LEF = ( X - X_MID ) / X_MID;
-          DIF_RIG = 0.0f;
+        float PWM_LEF = PWM;
+        float PWM_RIG = PWM;
+
+        if(X > X_MID + FORWARD_CORNERING_SEPARATION) {
+          PWM_LEF = CEN + ( ( PWM_MAX_FOR - CEN ) * (( X - X_MID ) / X_MID ) );
+          PWM_RIG = CEN;
+        }
+        if(X < X_MID -FORWARD_CORNERING_SEPARATION) {
+          PWM_LEF = CEN;
+          PWM_RIG = CEN + ( ( PWM_MAX_FOR - CEN ) * ( 1.0F - ( X / X_MID ) ) );
         }
 
-        float PWM_LEF = PWM + ( ( DIF_MAX * DIF_RIG ) * DIR );
-
-        float PWM_RIG = PWM + ( ( DIF_MAX * DIF_LEF ) * DIR );*/
-
-        setLeftSpeed(PWM);
-        setRightSpeed(PWM);
-        //setLeftSpeed(PWM_LEF);
-        //setRightSpeed(PWM_RIG);
+        setLeftSpeed(PWM_LEF);
+        setRightSpeed(PWM_RIG);
     }
 
     void setLeftSpeed(float speed) {
@@ -112,15 +111,15 @@ public:
         updateMotors();
     }
 
-    void leftFull() {
+    void leftTurn() {
         joystickEnabled = false;
         setLeftSpeed(PWM_MAX_BAC);
-        setRightSpeed(PWM_MAX_FOR);
+        setRightSpeed(PWM_MAX_FOR_BUT);
     }
 
-    void rightFull() {
+    void rightTurn() {
         joystickEnabled = false;
-        setLeftSpeed(PWM_MAX_FOR);
+        setLeftSpeed(PWM_MAX_FOR_BUT);
         setRightSpeed(PWM_MAX_BAC);
     }
 
