@@ -1,0 +1,10 @@
+1540 max
+1525 min óramutató szerint
+1512 cicereg
+1513 cicereg
+1512 áll
+1498 KÖZÉP
+1484 áll
+1483 cicereg
+1475 min óramutatóval ellentétes
+1460 min

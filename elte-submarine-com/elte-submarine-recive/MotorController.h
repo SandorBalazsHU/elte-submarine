@@ -18,15 +18,16 @@ private:
     bool joystickEnabled;
 
     //---Kalibrációs értékek---
-    float PWM_MAX_FOR = 1540;
+    float PWM_MAX_FOR = 1580;
     float CEN         = 1498;
-    float PWM_MAX_BAC = 1460;
-    float X_MAX       = 675;
-    float Y_MAX       = 675;
-    float X_MID       = 331;
-    float Y_MID       = 346;
+    float PWM_MAX_BAC = 1420;
+    float X_MAX       = 1022;
+    float Y_MAX       = 1022;
+    float X_MID       = 515;
+    float Y_MID       = 499;
 
-    float PWM_MAX_FOR_BUT = 1530;
+    float PWM_MAX_BAC_BUT = 1420;
+    float PWM_MAX_FOR_BUT = 1580;
 
     float FORWARD_CORNERING_SEPARATION = 3.0f;
 
@@ -133,6 +134,18 @@ public:
         movementEnabled = true;
         setLeftSpeed(CEN);
         setRightSpeed(CEN);
+    }
+
+    void forward() {
+        joystickEnabled = false;
+        setLeftSpeed(PWM_MAX_FOR_BUT);
+        setRightSpeed(PWM_MAX_FOR_BUT);
+    }
+
+    void backward() {
+        joystickEnabled = false;
+        setLeftSpeed(PWM_MAX_BAC_BUT);
+        setRightSpeed(PWM_MAX_BAC_BUT);
     }
 
     float getLeftSpeed() const { return leftSpeed; }

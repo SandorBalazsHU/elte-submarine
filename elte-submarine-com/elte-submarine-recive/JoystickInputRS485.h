@@ -17,8 +17,8 @@ private:
 public:
     JoystickInputRS485() : serialRS485(RS485Receive()) {
 
-        const int X_MID = 331;
-        const int Y_MID = 346;
+        const int X_MID = 515;
+        const int Y_MID = 499;
         xValue = X_MID;
         yValue = Y_MID;
 
