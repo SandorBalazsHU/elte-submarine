@@ -1,6 +1,6 @@
 // Lábra kötött szenzor és vezérlés
 const int waterSensorPin = A0;
-const int powerControlPin = D7;
+const int powerControlPin = D5;
 
 // Érzékelési küszöb (ez a szenzortól függően változhat)
 const int waterThreshold = 300;
